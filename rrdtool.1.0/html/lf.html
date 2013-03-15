@@ -1,0 +1,115 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>自动化运维-monigo-监控狗,开源成就梦想</title>
+<base target="main">
+<style type="text/css">
+body { margin:0px 0 0 0px;}
+ul { margin:0 auto; list-style: none; }
+#faq { width: 100%;padding-left: 0px;}
+#faq li { margin: 0; padding:0;}
+#faq dl { margin: 0; padding:0; display:inline;}
+#faq dt { font-size:20px;font-weight:bold;cursor:pointer;padding:5px 0 5px 0px;line-height: 30px;background:#00A06B;border-bottom:1px #ccc dotted;text-align:center}
+#faq dd { font-size:18px;display:none; margin:0;cursor:pointer;background:#98D0B9;height:14px;padding:7px; line-height: 90%; border-bottom:1px #103667 dotted;text-align:center}
+#faq dd a {text-decoration: none; color:black;}
+</style>
+
+<script type="text/javascript">
+var lastFaqClick=null;
+window.onload=function(){
+  var faq=document.getElementById("faq");
+  var dls=faq.getElementsByTagName("dl");
+  for (var i=0,dl;dl=dls[i];i++){
+    var dt=dl.getElementsByTagName("dt")[0];//取得标题
+     dt.id = "faq_dt_"+(Math.random()*100);
+     dt.onclick=function(){
+       var p=this.parentNode;//取得父节点
+        if (lastFaqClick!=null&&lastFaqClick.id!=this.id){
+          var dds=lastFaqClick.parentNode.getElementsByTagName("dd");
+          for (var i=0,dd;dd=dds[i];i++)
+            dd.style.display='none';
+        }
+        lastFaqClick=this;
+        var dds=p.getElementsByTagName("dd");//取得对应子节点，也就是说明部分
+        var tmpDisplay='none';
+        if (gs(dds[0],'display')=='none')
+          tmpDisplay='block';
+        for (var i=0;i<dds.length;i++)
+          dds[i].style.display=tmpDisplay;
+      }
+  }
+}
+
+function gs(d,a){
+  if (d.currentStyle){
+    var curVal=d.currentStyle[a]
+  }else{
+    var curVal=document.defaultView.getComputedStyle(d, null)[a]
+  }
+  return curVal;
+}
+</script>
+</head>
+
+<body bgcolor="6EC3C9"><center>
+<!--  #faq dt { font-size:20px;font-weight:bold;cursor:pointer;padding:5px 0 5px 70px;line-height: 30px;background:#00A06B;border-bottom:1px #ccc dotted;text-align:center} -->
+<img src='../images/ico/ico.jpg' /></center>
+<ul id="faq">
+  <li>
+    <dl>
+      <dt>总览</dt>
+      <dd><a href='health.html'>监控概况</a></dd>
+     <!--  <dd><a href='tcp.html'>TCP概况</a></dd> -->
+      <dd><a href='about.html'>关于</a></dd>
+    </dl>
+  </li>
+   <li>
+    <dl>
+      <dt>主机</dt>
+      <dd><a href='172.16.1.1.html'>172.16.1.1</a></dd>
+      <dd><a href='172.16.1.2.html'>172.16.1.2</a></dd>
+      <dd><a href='172.16.1.4.html'>172.16.1.4</a></dd>
+      <dd><a href='172.16.1.5.html'>172.16.1.5</a></dd>
+      <dd><a href='172.16.1.10.html'>172.16.1.10</a></dd>
+      <dd><a href='172.16.1.11.html'>172.16.1.11</a></dd>
+      <dd><a href='172.16.1.12.html'>172.16.1.12</a></dd>
+      <dd><a href='172.16.1.20.html'>172.16.1.20</a></dd>
+      <dd><a href='172.16.1.21.html'>172.16.1.21</a></dd>
+      <dd><a href='172.16.1.22.html'>172.16.1.22</a></dd>
+      <dd><a href='172.16.1.23.html'>172.16.1.23</a></dd>
+      <dd><a href='172.16.1.24.html'>172.16.1.24</a></dd>
+      <dd><a href='172.16.1.25.html'>172.16.1.25</a></dd>
+      <dd><a href='172.16.1.26.html'>172.16.1.26</a></dd>
+      <dd><a href='172.16.1.27.html'>172.16.1.27</a></dd>
+      <dd><a href='172.16.1.29.html'>172.16.1.29</a></dd>
+      <dd><a href='172.16.1.30.html'>172.16.1.30</a></dd>
+      <dd><a href='172.16.1.31.html'>172.16.1.31</a></dd>
+      <dd><a href='172.16.1.32.html'>172.16.1.32</a></dd>
+      <dd><a href='172.16.1.40.html'>172.16.1.40</a></dd>
+      <dd><a href='172.16.1.41.html'>172.16.1.41</a></dd>
+    </dl>
+  </li>
+   <li>
+    <dl>
+      <dt>服务</dt>
+      <dd><a href='/admins/redis'>redis</a></dd>
+    </dl>
+  </li>
+   <li>
+    <dl>
+      <dt>管理</dt>
+      <dd><a href='/admins/hostadmin'>主机管理</a></dd>
+      <dd><a href='/admins/normalset'>常规设置</a></dd>
+      <dd><a href='/admins/normalset'>报警管理</a></dd>
+      <dd><a href='/admins/normalset'>监控项设置</a></dd>
+    </dl>
+  </li>
+ </ul>
+<br />
+
+<div style="margin:415px 0 0 20px">
+Monigo:监控狗 V.10<br>
+author@zhangkai  2012
+</div>
+</body>
+</html>

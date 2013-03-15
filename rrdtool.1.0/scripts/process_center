@@ -1,0 +1,59 @@
+#!/bin/bash
+
+## 使用parscgi解码
+/usr/local/bin/parsecgi > /tmp/example.cgi.$$
+. /tmp/example.cgi.$$ 
+rm -rf /tmp/example.cgi.$$
+
+source  /var/www/rrdtool/scripts/config.sh
+hostConf="host_config.list.test.tmp"
+
+
+##--------------------------------------------------------------------
+##--------------------------------------------------------------------
+
+
+
+function host_delete
+{
+## 输出html头部信息
+echo Content-type: text/html
+echo 
+## 从配置文件中删除主机
+sed -i "/\<$HTTP_host_del\>/d" $conf_dir/$hostConf && echo "<script type='text/javascript' language='javascript'>self.parent.frames['main'].location.replace('/admins/hostadmin')</script>" 
+}
+
+
+function host_edit
+{
+$script_dir/host_edit $HTTP_host_edit	
+}
+
+function host_edit_save
+{
+
+## 输出html头部信息
+echo Content-type: text/html
+echo 
+## 从配置文件中删除主机
+#sed -i "/\<$HTTP_host_del\>/d" $conf_dir/$hostConf &&
+echo "<script type='text/javascript' language='javascript'>self.parent.frames['main'].location.replace('/admins/hostadmin')</script>" 
+
+}
+
+
+##--------------------------------------------------------------------
+## 进入处理判断中心
+case $HTTP_submit in 
+        "host_admin")
+		if [ ! -z $HTTP_host_edit ];then
+			host_edit
+		fi
+		if [ ! -z $HTTP_host_del ];then
+			host_delete		
+		fi
+		if [ ! -z $HTTP_host_edit_save ];then
+			host_edit_save
+		fi
+	;;
+esac

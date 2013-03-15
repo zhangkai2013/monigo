@@ -1,0 +1,120 @@
+#!/bin/bash
+# 该脚本批量生产图片
+# zhangkai 20121026
+echo `date +%Y%m%d-%T`
+source /var/www/rrdtool/scripts/config.sh
+
+
+function graph_png
+{
+#通过snmp 获取各个监控数据存入rrd文件
+lines=`awk 'END{print NR}' $conf_dir/host_config.list`  ; i=1
+while (($i<=$lines))
+do
+        ip=`sed -n "$i"p  $conf_dir/host_config.list | awk '{print $2}'`
+
+        for element in $elements
+        do
+
+                ## 系统负载upload 画图
+                if [[ $element == upload ]];then
+
+			DEF_STR=;LABLE_STR=;k=0
+                        for j in 1 5 15
+                        do 
+		        DEF_STR_TEMP=DEF:value$j=${data_dir}/${element}/${ip}.${element}.rrd:upload$j:AVERAGE
+		        DEF_STR=$DEF_STR" "$DEF_STR_TEMP
+                        LABLE_STR=$LABLE_STR" AREA:value$j#${upload_colors[$k]}:${j}分钟  GPRINT:value$j:LAST:%${upload_space[$k]}  COMMENT:\n" 
+			k=$(($k+1))
+                        done
+
+			for day in 1 
+			do			
+        		$rrdtool graph  ${img_dir}/${element}/${ip}.day${day}.png  --step 300 --font TITLE:10:FZZHYJW.ttf --start now-${day}d   -w 800 -h 200 -Y -b 1000  --x-grid MINUTE:30:HOUR:1:HOUR:1:0:'%H'  --lower-limit 0  -t "${ip}  系统负载x100" -v "默认单位："  $DEF_STR  COMMENT:" \n"  COMMENT:"---------系统负载----------"  COMMENT:"\n" $LABLE_STR COMMENT:"最后更新 \:$(date '+%Y-%m-%d %H\:%M')\n"   -c BACK#CAE5E8   &
+			done
+                fi
+
+
+                ## 接口流量画图
+                if [[ $element == traffic ]];then
+                        for interface in ` snmpwalk -v2c $ip -c crhkey IF-MIB::ifDescr |awk '{print $4}' | grep -v lo | grep -v sit0|grep -v tun`
+                        do
+                                DEF_STR=;LABLE_STR=;VDEF_STR=;CDEF_STR=;k=0
+                                for inout in  in out
+                                do 
+                                DEF_STR_TEMP=DEF:value$k=${data_dir}/${element}/${ip}.${element}.rrd:${interface}${inout}:AVERAGE
+                                DEF_STR=$DEF_STR" "$DEF_STR_TEMP
+
+                                #VDEF_STR_TEMP="VDEF:value${k}max=value${k},MAXIMUM VDEF:value${k}avg=value${k},AVERAGE VDEF:value${k}min=value${k},MINIMUM VDEF:value${k}last=value${k},95,PERCENT"
+                                #VDEF_STR=$VDEF_STR" "$VDEF_STR_TEMP
+
+                                CDEF_STR_TEMP="CDEF:value${k}bits=value${k},8,*"
+                                CDEF_STR=$CDEF_STR" "$CDEF_STR_TEMP
+
+                                #LABLE_STR="$LABLE_STR  ${line_area[$k]}:value${k}bits#${traffic_colors[$k]}:$inout GPRINT:value${k}max:%${traffic_space[$k]}%Sbps  GPRINT:value${k}avg:%${traffic_space[$k]}%Sbps  GPRINT:value${k}min:%${traffic_space[$k]}%Sbps GPRINT:value${k}last:%${traffic_space[$k]}%Sbps\l"
+                                LABLE_STR="$LABLE_STR  ${line_area[$k]}:value${k}bits#${traffic_colors[$k]}:$inout GPRINT:value$k:MAX:%${traffic_space[$k]}%SBps GPRINT:value$k:AVERAGE:%${traffic_space[$k]}%SBps GPRINT:value$k:LAST:%${traffic_space[$k]}%SBps\l"
+                                k=$(($k+1))
+                                done
+
+
+                                # 画1天图 
+                                $rrdtool graph  ${img_dir}/${element}/${ip}.${interface}.day1.png  --step 300 --font TITLE:10:FZZHYJW.ttf --start now-1d   -w 800 -h 200 -Y -b 1000  --x-grid MINUTE:30:HOUR:1:HOUR:1:0:'%H'  --lower-limit 0  -t "${ip} ${interface}  接口流量" -v "默认单位：bit/s"  $DEF_STR $VDEF_STR $CDEF_STR   COMMENT:" \n" COMMENT:"---------------------------接口流量---------------------------"  COMMENT:"\n"  COMMENT:"           " COMMENT:"Maximum       "    COMMENT:"Average       " COMMENT:"last       \l"  $LABLE_STR COMMENT:"最后更新 \:$(date '+%Y-%m-%d %H\:%M')\n"   -c BACK#CAE5E8   &
+
+                                # 画7天图
+                                #$rrdtool graph  ${img_dir}/${element}/${ip}.${interface}.day7.png  --step 300   --start now-7d   -w 800 -h 200 -Y -b 1000   --lower-limit 0  -t "${ip} ${interface}  接口流量" -v "默认单位：bit/s"  $DEF_STR  COMMENT:" \n"  COMMENT:"---------接口流量----------"  COMMENT:"\n" $LABLE_STR COMMENT:"最后更新 \:$(date '+%Y-%m-%d %H\:%M')\n"   -c BACK#CAE5E8   &
+                        done
+                fi
+
+
+                ## 磁盘io 画图
+                if [[ $element == io ]];then
+                
+                        # 遍历每个磁盘的io
+                        for diskname in `snmpwalk -v2c $ip -c crhkey UCD-DISKIO-MIB::diskIODevice |grep sd |awk '{print $4}'|cut -c 1-3|uniq`
+                        do
+                                # 拼接磁盘io的读写次数
+                                DEF_STR=;LABLE_STR=;k=0
+                                for iorw in  reads writes 
+                                do
+                                        DEF_STR_TEMP=DEF:value$k=${data_dir}/${element}/${ip}.${element}.rrd:${diskname}${iorw}:AVERAGE
+                                        DEF_STR=$DEF_STR" "$DEF_STR_TEMP
+
+                                        LABLE_STR="$LABLE_STR  ${line_area[$k]}:value${k}#${default_colors[$k]}:${iorw} GPRINT:value$k:MAX:%${iorws_space[$k]} GPRINT:value$k:AVERAGE:%${iorws_space[$k]} GPRINT:value$k:LAST:%${iorws_space[$k]}\l"
+                                        k=$(($k+1))
+                                done
+
+                                # 画图
+                                $rrdtool graph  ${img_dir}/${element}/${ip}.${diskname}.rsws.day1.png --step 300  --font TITLE:10:FZZHYJW.ttf --start now-1d   -w 800 -h 200 -Y -b 1000  --x-grid MINUTE:30:HOUR:1:HOUR:1:0:'%H'  --lower-limit 0  -t "${ip} ${diskname}  磁盘读写次数" -v "默认单位：次/second"  $DEF_STR  COMMENT:" \n" COMMENT:"--------------------磁盘每秒读写次数---(单位：次/秒)--------------------"  COMMENT:"\n"  COMMENT:"             " COMMENT:"Maximum   " COMMENT:"Average   " COMMENT:"last   \l"  $LABLE_STR COMMENT:"最后更新 \:$(date '+%Y-%m-%d %H\:%M')\n"   -c BACK#CAE5E8   &
+
+
+
+                                # 拼接磁盘io的读写字符数
+                                DEF_STR=;LABLE_STR=;CDEF_STR=;k=0
+                                for iorw in  readNumbers writeNumbers
+                                do
+                                        DEF_STR_TEMP=DEF:value$k=${data_dir}/${element}/${ip}.${element}.rrd:${diskname}${iorw}:AVERAGE
+                                        DEF_STR=$DEF_STR" "$DEF_STR_TEMP
+
+                                        CDEF_STR_TEMP="CDEF:value${k}bits=value${k},8,*"
+                                        CDEF_STR=$CDEF_STR" "$CDEF_STR_TEMP
+
+                                        LABLE_STR="$LABLE_STR  ${line_area[$k]}:value${k}bits#${default_colors[$k]}:${iorw} GPRINT:value$k:MAX:%${iorwn_space[$k]}%SBps GPRINT:value$k:AVERAGE:%${iorwn_space[$k]}%SBps GPRINT:value$k:LAST:%${iorwn_space[$k]}%SBps\l"
+                                        k=$(($k+1))
+                                done
+
+                                # 画图
+                                $rrdtool graph  ${img_dir}/${element}/${ip}.${diskname}.rnwn.day1.png --step 300  --font TITLE:10:FZZHYJW.ttf --start now-1d -w 800 -h 200 -Y -b 1000 --x-grid MINUTE:30:HOUR:1:HOUR:1:0:'%H' --lower-limit 0  -t "${ip} ${diskname}  磁盘读写量" -v "默认单位：bits/s" $DEF_STR $CDEF_STR COMMENT:" \n" COMMENT:"----------------------------磁盘每秒读写数据量----------------------------"  COMMENT:"\n" COMMENT:"                     " COMMENT:"Maximum       " COMMENT:"Average        " COMMENT:"last       \l"  $LABLE_STR COMMENT:"最后更新 \:$(date '+%Y-%m-%d %H\:%M')\n"  -c BACK#CAE5E8   &
+
+                        done
+
+                fi
+
+
+        done
+        i=$(($i+1))
+done
+}
+
+graph_png
+
+echo `date +%Y%m%d-%T`

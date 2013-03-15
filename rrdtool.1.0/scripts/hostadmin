@@ -1,0 +1,111 @@
+#!/bin/bash
+echo Content-type: text/html
+echo 
+
+source  /var/www/rrdtool/scripts/config.sh
+hostConf="host_config.list.test.tmp"
+countHost=`awk 'END{print NR}' $conf_dir/$hostConf`
+
+##-----------------------------------------------------
+function echo_page_head
+{
+## 输出html头部信息
+cat << EOF
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>
+</title>
+<style type="text/css">
+   button { background:#CAE5E8; }
+  .title {width:95%;height:80px;margin-bottom:20px;background:#CAE5E8;border:2px solid #ccc;border-width:2px;}
+  .title .ttl {width:95%;height:100%;font-weight: bold;text-align:center;padding-top:25px;font-size:30px}
+  .equalborder {width:95%;height:1px;display:table;border:1px solid #ccc;border-width:1px;border-collapse:separate;} 
+  .equal {width:95%;height:25px;display:table;border:1px solid #ccc;border-width:0px;border-collapse:separate;background:#CAE5E8;} 
+  .row { display:table-row; } 
+  .row div { display:table-cell;text-align:center;vertical-align:middle;font-size:15px;background:#CAE5E8;border: solid;border-width: 1px;border-color: #ccc;} 
+  #wdith5 { width:5%;} 
+.style1{
+width:100px;
+height:25px;
+float:left;
+cursor:pointer;
+background-color:green;
+background:url("/admin/images/common/btn_102-27.jpg");
+background-repeat:no-repeat;
+border:0px;
+outline: none;
+}
+</style>
+</head>
+<body><center>
+<div class='title'><div class="ttl">主机管理配置</div></div>
+<hr size="4" color="#CAE5E8" style=margin-bottom:0px >
+     <div class='equal'> 
+        <div class='row' style=background-color:white;>
+                <div style='background-color:white;border-width:0px;width:70%;'></div> 
+                <div style=background-color:white;border-width:0px;></div> 
+                <div style=width:200px;border-width:0px; >共有主机：$countHost 台</div> 
+                <div ><button class="style1" type=submit name=host_add value=add >添加主机</button></div>
+        </div>
+     </div>
+
+     <br>
+     <div class='equal'> 
+        <div class='row' style=font-weight:bold;> 
+                <div style=width:100px;height:25px >HOST</div> 
+                <div>监控项目</div> 
+<!--                <div style=width:20%  >服务</div>   -->
+                <div style=width:100px;height:25px >设置</div>
+        </div> 
+    </div> 
+    <div>
+	<form method="post"  name="form" action="process_center">
+        <input type=hidden value=host_admin name=submit />  
+    </div>		
+EOF
+}
+##----------------------------------------------------
+
+function echo_page_body
+{
+## 输出html主体
+
+for ip in `awk -F:: '{print $2}' $conf_dir/$hostConf`
+do
+	str=;
+        for element in ` grep -w $ip $conf_dir/$hostConf | awk -F:: '{print $3}'| sed 's/:/\ /g'`
+        do
+		str=$str" "$element
+	done
+
+        echo "<div class='equal'> 
+        <div class='row'> 
+                <div style=width:100px;height:25px >$ip</div> 
+                <div>$str</div> 
+           <!--     <div style=width:20% >暂略</div>  -->
+		<div style=width:100px;height:25px >
+			<button type=submit name=host_edit value="$ip" >编辑</button>
+			<button type=submit name=host_del value="$ip">删除</button>
+			</div> 
+		</div>
+                </div> 
+        </div>
+	" 
+done
+}
+##----------------------------------------------------
+function echo_page_foot
+{
+## 输出html尾部信息
+cat << EOF
+</form>
+</body>
+</html>
+EOF
+}
+
+##----------------------------------------------------
+echo_page_head
+echo_page_body
+echo_page_foot
